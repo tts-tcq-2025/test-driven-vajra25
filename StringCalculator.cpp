@@ -1,56 +1,77 @@
 #include "StringCalculator.h"
+#include <string>
+#include <vector>
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+using namespace std;
 
-std::string StringCalculator::getDelimiter(std::string &numbers) {
-    if (numbers.substr(0, 2) == "//") {
-        size_t pos = numbers.find('\n');
-        std::string delimiter = numbers.substr(2, pos - 2);
-        numbers = numbers.substr(pos + 1);
-        return delimiter;
+namespace {
+    string extractDelimiter(const string& header) {
+        if (header.size() > 1 && header.front() == '[' && header.back() == ']')
+            return header.substr(1, header.size() - 2);
+        return header;
     }
-    return ",";
-}
 
-std::vector<std::string> StringCalculator::split(const std::string &s, const std::string &delims) {
-    std::vector<std::string> result;
-    size_t last = 0;
-    size_t next = 0;
-    while ((next = s.find_first_of(delims, last)) != std::string::npos) {
-        result.push_back(s.substr(last, next - last));
-        last = next + 1;
+    vector<int> splitNumbers(const string& nums, const string& delimiter) {
+        vector<int> result;
+        string token;
+        string modified = nums;
+        size_t pos = 0, len = delimiter.length();
+
+        while ((pos = modified.find(delimiter, pos)) != string::npos) {
+            modified.replace(pos, len, ",");
+            pos += 1;
+        }
+
+        stringstream ss(modified);
+        while (getline(ss, token, ',')) {
+            if (!token.empty()) {
+                int val = stoi(token);
+                if (val <= 1000) result.push_back(val);
+            }
+        }
+        return result;
     }
-    result.push_back(s.substr(last));
-    return result;
-}
 
-int StringCalculator::toInt(const std::string &token, std::vector<int> &negatives) {
-    if (token.empty()) return 0;
-    int num = std::stoi(token);
-    if (num < 0) negatives.push_back(num);
-    return (num > 1000) ? 0 : num;
-}
+    string joinNegatives(const vector<int>& negatives) {
+        string result;
+        for (size_t i = 0; i < negatives.size(); ++i) {
+            if (i) result += ",";
+            result += to_string(negatives[i]);
+        }
+        return result;
+    }
 
-void StringCalculator::throwIfNegatives(const std::vector<int> &negatives) {
-    if (!negatives.empty()) {
-        std::ostringstream oss;
-        oss << "negatives not allowed:";
-        for (int n : negatives) oss << " " << n;
-        throw std::runtime_error(oss.str());
+    void checkNegatives(const vector<int>& values) {
+        vector<int> negatives;
+        for (int n : values)
+            if (n < 0) negatives.push_back(n);
+        if (!negatives.empty())
+            throw invalid_argument("negatives not allowed " + joinNegatives(negatives));
+    }
+
+    int sumValues(const vector<int>& values) {
+        int sum = 0;
+        for (int v : values) sum += v;
+        return sum;
     }
 }
 
-int StringCalculator::Add(const std::string &numbers) {
+int StringCalculator::Add(const string& numbers) {
     if (numbers.empty()) return 0;
-    std::string nums = numbers;
-    std::string delimiter = getDelimiter(nums);
-    std::vector<std::string> tokens = split(nums, delimiter + "\n,");
-    std::vector<int> negatives;
-    int sum = 0;
-    for (const auto &token : tokens) {
-        sum += toInt(token, negatives);
+
+    string delimiter = ",|\n";
+    string nums = numbers;
+
+    if (numbers.rfind("//", 0) == 0) {
+        size_t delimStart = numbers.find("//") + 2;
+        size_t delimEnd = numbers.find("\n", delimStart);
+        delimiter = extractDelimiter(numbers.substr(delimStart, delimEnd - delimStart));
+        nums = numbers.substr(delimEnd + 1);
     }
-    throwIfNegatives(negatives);
-    return sum;
+
+    vector<int> values = splitNumbers(nums, delimiter);
+    checkNegatives(values);
+    return sumValues(values);
 }
