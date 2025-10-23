@@ -4,67 +4,52 @@
 #include <vector>
 #include <stdexcept>
 
-using namespace std;
-
-namespace {
-    // Extracts delimiter and content separately
-    string getDelimiter(const string& input, string& content) {
-        if (input.rfind("//", 0) == 0) {
-            size_t newline = input.find('\n');
-            string header = input.substr(2, newline - 2);
-            if (header.size() > 1 && header.front() == '[' && header.back() == ']')
-                header = header.substr(1, header.size() - 2);
-            content = input.substr(newline + 1);
-            return header;
-        }
-        content = input;
-        return ",|\n"; // default delimiters: comma or newline
-    }
-
-    // Splits the input string into tokens using the given delimiter
-    vector<string> splitTokens(const string& input, const string& delimiter) {
-        vector<string> tokens;
-        string temp = input;
-        size_t pos = 0;
-
-        while ((pos = temp.find(delimiter)) != string::npos)
-            temp.replace(pos, delimiter.size(), ",");
-
-        string token;
-        stringstream ss(temp);
-        while (getline(ss, token, ',')) {
-            if (!token.empty()) tokens.push_back(token);
-        }
-        return tokens;
-    }
-
-    // Validates if any negative numbers exist
-    void validateNegatives(const vector<int>& nums) {
-        string negatives;
-        for (int n : nums)
-            if (n < 0) negatives += (negatives.empty() ? "" : ",") + to_string(n);
-        if (!negatives.empty())
-            throw invalid_argument("negatives not allowed " + negatives);
-    }
-}
-
-// Main Add function
-int StringCalculator::Add(const string& numbers) {
+int StringCalculator::Add(const std::string& numbers) {
     if (numbers.empty()) return 0;
 
-    string content;
-    string delimiter = getDelimiter(numbers, content);
-    vector<string> tokens = splitTokens(content, delimiter);
+    std::string nums = numbers;
+    std::string delimiter = ","; // default delimiter
 
-    vector<int> nums;
-    for (const auto& t : tokens) {
-        int val = stoi(t);
-        if (val <= 1000) nums.push_back(val);
+    // Check for custom delimiter
+    if (numbers.rfind("//", 0) == 0) {
+        size_t newlinePos = numbers.find('\n');
+        delimiter = numbers.substr(2, newlinePos - 2);
+        if (delimiter.size() >= 2 && delimiter.front() == '[' && delimiter.back() == ']')
+            delimiter = delimiter.substr(1, delimiter.size() - 2); // remove [ ]
+        nums = numbers.substr(newlinePos + 1);
     }
 
-    validateNegatives(nums);
+    // Replace newlines and custom delimiters with comma
+    for (size_t pos = 0; pos < nums.size(); ++pos) {
+        if (nums[pos] == '\n') nums[pos] = ',';
+    }
 
+    size_t pos = 0;
+    while ((pos = nums.find(delimiter, pos)) != std::string::npos) {
+        nums.replace(pos, delimiter.length(), ",");
+        pos += 1;
+    }
+
+    // Split numbers
+    std::vector<int> values;
+    std::string token;
+    std::stringstream ss(nums);
+    while (getline(ss, token, ',')) {
+        if (!token.empty()) {
+            int val = std::stoi(token);
+            if (val <= 1000) values.push_back(val);
+        }
+    }
+
+    // Check negatives
+    std::string negs;
+    for (int n : values) {
+        if (n < 0) negs += (negs.empty() ? "" : ",") + std::to_string(n);
+    }
+    if (!negs.empty()) throw std::invalid_argument("negatives not allowed " + negs);
+
+    // Sum
     int sum = 0;
-    for (int n : nums) sum += n;
+    for (int n : values) sum += n;
     return sum;
 }
