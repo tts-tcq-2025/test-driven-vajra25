@@ -5,10 +5,10 @@
 int StringCalculator::Add(const std::string& numbers) {
     if (numbers.empty()) return 0;
 
-    std::string delimiter = ",";
     std::string content = numbers;
+    std::string delimiter = ",";
 
-    // Custom delimiter
+    // Step 1: Custom delimiter
     if (numbers.substr(0, 2) == "//") {
         size_t pos = numbers.find('\n');
         delimiter = numbers.substr(2, pos - 2);
@@ -19,11 +19,11 @@ int StringCalculator::Add(const std::string& numbers) {
             delimiter = delimiter.substr(1, delimiter.size() - 2);
     }
 
-    // Replace newlines with delimiter
+    // Step 2: Replace newlines with delimiter
     for (size_t i = 0; i < content.size(); ++i)
         if (content[i] == '\n') content[i] = delimiter[0];
 
-    // Split and process numbers
+    // Step 3: Split numbers and calculate sum
     int sum = 0;
     std::string temp;
     std::string negatives;
