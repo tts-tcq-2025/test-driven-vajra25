@@ -5,7 +5,6 @@
 
 class StringCalculator {
 public:
-    // Adds numbers from string input
     int Add(const std::string& numbers);
 };
 
