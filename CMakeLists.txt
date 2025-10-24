@@ -4,7 +4,6 @@ project(StringCalculator)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# GoogleTest
 include(FetchContent)
 FetchContent_Declare(
     googletest
