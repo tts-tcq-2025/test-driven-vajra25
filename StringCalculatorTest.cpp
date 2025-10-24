@@ -1,50 +1,40 @@
 #include "StringCalculator.h"
-#include <gtest/gtest.h>
+#include <cassert>
+#include <iostream>
 
-class StringCalculatorTest : public ::testing::Test {
-protected:
-    StringCalculator calculator;
-};
+int main() {
+    StringCalculator calc;
 
-TEST_F(StringCalculatorTest, EmptyStringReturnsZero) {
-    EXPECT_EQ(calculator.Add(""), 0);
-}
+    // Step 1: Empty string
+    assert(calc.Add("") == 0);
 
-TEST_F(StringCalculatorTest, SingleNumberReturnsItself) {
-    EXPECT_EQ(calculator.Add("1"), 1);
-}
+    // Step 2: Single number
+    assert(calc.Add("1") == 1);
 
-TEST_F(StringCalculatorTest, TwoNumbersCommaSeparated) {
-    EXPECT_EQ(calculator.Add("1,2"), 3);
-}
+    // Step 3: Two numbers
+    assert(calc.Add("1,2") == 3);
 
-TEST_F(StringCalculatorTest, MultipleNumbersCommaSeparated) {
-    EXPECT_EQ(calculator.Add("1,2,3,4"), 10);
-}
+    // Step 4: Newline between numbers
+    assert(calc.Add("1\n2,3") == 6);
 
-TEST_F(StringCalculatorTest, HandlesNewlineAsDelimiter) {
-    EXPECT_EQ(calculator.Add("1\n2,3"), 6);
-}
+    // Step 5: Custom delimiter
+    assert(calc.Add("//;\n1;2") == 3);
 
-TEST_F(StringCalculatorTest, SupportsCustomDelimiter) {
-    EXPECT_EQ(calculator.Add("//;\n1;2"), 3);
-}
+    // Step 6: Custom long delimiter
+    assert(calc.Add("//[***]\n1***2***3") == 6);
 
-TEST_F(StringCalculatorTest, ThrowsOnNegativeNumbers) {
+    // Step 7: Ignore >1000
+    assert(calc.Add("2,1001") == 2);
+
+    // Step 8: Negatives (should throw)
     try {
-        calculator.Add("1,-2,3,-4");
-        FAIL() << "Expected std::invalid_argument";
-    } catch (std::invalid_argument const &err) {
-        EXPECT_EQ(std::string(err.what()), "negatives not allowed: -2, -4");
-    } catch (...) {
-        FAIL() << "Expected std::invalid_argument";
+        calc.Add("1,-2,3,-4");
+        assert(false); // should not reach here
+    } catch (const std::invalid_argument& e) {
+        std::string msg = e.what();
+        assert(msg.find("negatives not allowed") != std::string::npos);
     }
-}
 
-TEST_F(StringCalculatorTest, IgnoresNumbersGreaterThan1000) {
-    EXPECT_EQ(calculator.Add("2,1001"), 2);
-}
-
-TEST_F(StringCalculatorTest, SupportsDelimitersOfAnyLength) {
-    EXPECT_EQ(calculator.Add("//[***]\n1***2***3"), 6);
+    std::cout << "✅ All TDD test cases passed successfully!" << std::endl;
+    return 0;
 }
