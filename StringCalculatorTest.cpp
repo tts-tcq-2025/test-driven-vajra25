@@ -1,27 +1,41 @@
 #include "StringCalculator.h"
 #include <cassert>
 #include <iostream>
+#include <stdexcept>
 
 int main() {
     StringCalculator calc;
 
-    assert(calc.Add("") == 0);          // Empty string
-    assert(calc.Add("1") == 1);         // Single number
-    assert(calc.Add("1,2") == 3);       // Two numbers
-    assert(calc.Add("1\n2,3") == 6);    // Newline as delimiter
-    assert(calc.Add("//;\n1;2") == 3);  // Custom delimiter
-    assert(calc.Add("//[***]\n1***2***3") == 6); // Long delimiter
-    assert(calc.Add("2,1001") == 2);    // Ignore >1000
+    // Step 1: empty string
+    assert(calc.Add("") == 0);
 
-    // Check negatives
+    // Step 2: single number
+    assert(calc.Add("1") == 1);
+
+    // Step 3: two numbers
+    assert(calc.Add("1,2") == 3);
+
+    // Step 4: newlines as separators
+    assert(calc.Add("1\n2,3") == 6);
+
+    // Step 5: custom delimiter
+    assert(calc.Add("//;\n1;2") == 3);
+
+    // Step 6: long delimiter
+    assert(calc.Add("//[***]\n1***2***3") == 6);
+
+    // Step 7: ignore numbers >1000
+    assert(calc.Add("2,1001") == 2);
+
+    // Step 8: negatives
     try {
         calc.Add("1,-2,3,-4");
-        assert(false);
+        assert(false); // should not reach
     } catch (const std::invalid_argument& e) {
         std::string msg = e.what();
         assert(msg.find("negatives not allowed") != std::string::npos);
     }
 
-    std::cout << "✅ All tests passed!" << std::endl;
+    std::cout << "All test cases passed!" << std::endl;
     return 0;
 }
