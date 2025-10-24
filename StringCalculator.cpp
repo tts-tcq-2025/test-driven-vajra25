@@ -1,55 +1,65 @@
 #include "StringCalculator.h"
-#include <string>
 #include <sstream>
 #include <vector>
 #include <stdexcept>
+#include <cctype>
+
+namespace {
+    std::vector<std::string> split(const std::string& str, const std::string& delimiter) {
+        std::vector<std::string> tokens;
+        size_t start = 0, end;
+        while ((end = str.find(delimiter, start)) != std::string::npos) {
+            tokens.push_back(str.substr(start, end - start));
+            start = end + delimiter.length();
+        }
+        tokens.push_back(str.substr(start));
+        return tokens;
+    }
+
+    void checkNegatives(const std::vector<int>& nums) {
+        std::vector<int> negatives;
+        for (int n : nums) {
+            if (n < 0) negatives.push_back(n);
+        }
+        if (!negatives.empty()) {
+            std::ostringstream oss;
+            oss << "negatives not allowed: ";
+            for (size_t i = 0; i < negatives.size(); ++i) {
+                if (i > 0) oss << ", ";
+                oss << negatives[i];
+            }
+            throw std::invalid_argument(oss.str());
+        }
+    }
+}
 
 int StringCalculator::Add(const std::string& numbers) {
     if (numbers.empty()) return 0;
 
-    std::string nums = numbers;
-    std::string delimiter = ","; // default delimiter
-
-    // Check for custom delimiter
+    std::string numStr = numbers;
+    std::string delimiter = ",|\n";
     if (numbers.rfind("//", 0) == 0) {
-        size_t newlinePos = numbers.find('\n');
-        delimiter = numbers.substr(2, newlinePos - 2);
-        if (delimiter.size() >= 2 && delimiter.front() == '[' && delimiter.back() == ']')
-            delimiter = delimiter.substr(1, delimiter.size() - 2); // remove [ ]
-        nums = numbers.substr(newlinePos + 1);
+        auto endPos = numbers.find('\n');
+        delimiter = numbers.substr(2, endPos - 2);
+        numStr = numbers.substr(endPos + 1);
+        if (delimiter.size() > 2 && delimiter.front() == '[' && delimiter.back() == ']')
+            delimiter = delimiter.substr(1, delimiter.size() - 2);
     }
 
-    // Replace newlines and custom delimiters with comma
-    for (size_t pos = 0; pos < nums.size(); ++pos) {
-        if (nums[pos] == '\n') nums[pos] = ',';
+    for (char& c : numStr)
+        if (c == '\n') c = delimiter[0];
+
+    std::vector<std::string> parts = split(numStr, std::string(1, delimiter[0]));
+    std::vector<int> nums;
+    for (const auto& p : parts) {
+        if (p.empty()) continue;
+        int val = std::stoi(p);
+        if (val <= 1000) nums.push_back(val);
     }
 
-    size_t pos = 0;
-    while ((pos = nums.find(delimiter, pos)) != std::string::npos) {
-        nums.replace(pos, delimiter.length(), ",");
-        pos += 1;
-    }
+    checkNegatives(nums);
 
-    // Split numbers
-    std::vector<int> values;
-    std::string token;
-    std::stringstream ss(nums);
-    while (getline(ss, token, ',')) {
-        if (!token.empty()) {
-            int val = std::stoi(token);
-            if (val <= 1000) values.push_back(val);
-        }
-    }
-
-    // Check negatives
-    std::string negs;
-    for (int n : values) {
-        if (n < 0) negs += (negs.empty() ? "" : ",") + std::to_string(n);
-    }
-    if (!negs.empty()) throw std::invalid_argument("negatives not allowed " + negs);
-
-    // Sum
     int sum = 0;
-    for (int n : values) sum += n;
+    for (int n : nums) sum += n;
     return sum;
 }
